@@ -29,6 +29,7 @@ class Matrix {
 	private:
 		size_t nRows_ = 0, nCols_ = 0;
 		T** data_ = nullptr;
+
 	public:
 		//	CTORS AND DTORS
 		Matrix (size_t rows, size_t cols, T value = T{});
@@ -78,11 +79,23 @@ class Matrix {
 		T Determinant (Determinant::Type type = Determinant::Type::ERROR) const;
 };
 
+//	INPUT AND OUTPUT
 template <typename T>
 std::istream& operator >> (std::istream& stream, Matrix <T>& rhs);
-
 template <typename T>
 std::ostream& operator << (std::ostream& stream, const Matrix <T>& rhs);
+
+//	OVERLOADED OPERATORS
+template <typename T>
+Matrix <T> operator + (const Matrix <T>& lhs, const Matrix <T>& rhs);
+template <typename T>
+Matrix <T> operator - (const Matrix <T>& lhs, const Matrix <T>& rhs);
+template <typename T>
+Matrix <T> operator * (const T number, const Matrix <T>& rhs);
+template <typename T>
+Matrix <T> operator * (const Matrix <T>& lhs, const T number);
+template <typename T>
+Matrix <T> operator * (const Matrix <T>& lhs, const Matrix <T>& rhs);
 
 
 // MAIN CODE //
@@ -501,4 +514,39 @@ template <typename T>
 std::ostream& operator << (std::ostream& stream, const Matrix <T>& rhs) {
 	rhs.Dump (stream);
 	return stream;
+}
+
+template <typename T>
+Matrix <T> operator + (const Matrix <T>& lhs, const Matrix <T>& rhs) {
+	Matrix <T> temp { lhs };
+	temp += rhs;
+	return temp;
+}
+
+template <typename T>
+Matrix <T> operator - (const Matrix <T>& lhs, const Matrix <T>& rhs) {
+	Matrix <T> temp { lhs };
+	temp -= rhs;
+	return temp;
+}
+
+template <typename T>
+Matrix <T> operator * (const T number, const Matrix <T>& rhs) {
+	Matrix <T> temp { rhs };
+	temp *= number;
+	return temp;
+}
+
+template <typename T>
+Matrix <T> operator * (const Matrix <T>& lhs, const T number) {
+	Matrix <T> temp { lhs };
+	temp *= number;
+	return temp;
+}
+
+template <typename T>
+Matrix <T> operator * (const Matrix <T>& lhs, const Matrix <T>& rhs) {
+	Matrix <T> temp { lhs };
+	temp *= rhs;
+	return temp;
 }

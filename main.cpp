@@ -3,14 +3,8 @@
 #include "MatrixLib.hpp"
 
 int main () {
-	Matrix <double> m1 {}, m2 {};
-	std::ifstream infile { "tests/test_mul.txt" };
-	if (infile) {
-		infile >> m1 >> m2;
-		std::cout << std::boolalpha << (m1 != m2) << std::endl << (m1 *= m2).Clear () << std::endl;
-	}
-	else {
-		std::cerr << "Error opening file" << std::endl;
-	}
+	Matrix <double> m1 {};
+	std::cin >> m1;
+	std::cout << m1.Determinant (Determinant::Type::GAUSS) <<std::endl;
 	return 0;
 }
