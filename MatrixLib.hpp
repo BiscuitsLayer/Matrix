@@ -5,6 +5,7 @@
 #include <cmath>
 
 const double EPS = 1e-3;
+using pair_size_t = std::pair <size_t, size_t>;
 
 template <typename T>
 class Matrix;
@@ -32,9 +33,9 @@ class Matrix {
 
 	public:
 		//	CTORS AND DTORS
-		Matrix (size_t rows, size_t cols, T value = T{});
-		Matrix (size_t rows);
-		Matrix ();
+		Matrix 	(size_t rows, size_t cols, T value = T{});
+		Matrix 	(size_t rows);
+		Matrix 	();
 		~Matrix ();
 		
 		//	FROM VECTOR
@@ -42,35 +43,37 @@ class Matrix {
 
 		//	FROM ANOTHER MATRIX
 		Matrix (const Matrix& rhs);
+		Matrix (Matrix&& rhs);
 
 		//	OVERLOADED OPERATORS AND METHODS
-		Matrix& operator = (const Matrix& rhs);
-		bool operator == (const Matrix& rhs) const;
-		bool operator != (const Matrix& rhs) const;
-		Matrix& operator *= (const T number) &;
+		Matrix& operator = 	(const Matrix& rhs);
+		Matrix& operator = 	(Matrix&& rhs);
+		bool 	operator == (const Matrix& rhs) const;
+		bool 	operator != (const Matrix& rhs) const;
+		Matrix& operator *= (const T number) 	&;
 		Matrix& operator *= (const Matrix& rhs) &;
 		Matrix& operator += (const Matrix& rhs) &;
 		Matrix& operator -= (const Matrix& rhs) &;
-		Matrix& Transpose () &;
-		Matrix& Negate () &;
-		Matrix& Clear () &;
+		Matrix& Transpose 	() &;
+		Matrix& Negate 		() &;
+		Matrix& Clear 		() &;
 
 		//	ROW AND COLUMN OPERATIONS
-		Matrix& SwapRows (size_t lhs, size_t rhs);
-		Matrix& AddRows (size_t source, size_t destination, T factor);
-		Matrix& SwapCols (size_t lhs, size_t rhs);
-		Matrix& AddCols (size_t source, size_t destination, T factor);
+		Matrix& SwapRows 	(size_t lhs, size_t rhs);
+		Matrix& AddRows		(size_t source, size_t destination, T factor);
+		Matrix& SwapCols 	(size_t lhs, size_t rhs);
+		Matrix& AddCols 	(size_t source, size_t destination, T factor);
 
 		//	BASIC TYPES
 		static Matrix Zeros (size_t n);
-		static Matrix Eye (size_t n);
+		static Matrix Eye 	(size_t n);
 
 		//	GETTERS
-		std::pair <size_t, size_t> Shape () const;
-		size_t Size () const;
-		T Trace () const;
-		const T& At (size_t i, size_t j) const;
-		void Dump (std::ostream& stream) const;
+		pair_size_t Shape	() const;
+		size_t 		Size 	() const;
+		T 			Trace 	() const;
+		const T& 	At 		(size_t i, size_t j) const;
+		void 		Dump 	(std::ostream& stream) const;
 
 		//	SETTERS
 		T& At (size_t i, size_t j);
@@ -235,6 +238,15 @@ Matrix <T>::Matrix (const Matrix& rhs) {
 			data_[i][j] = rhs.data_[i][j];
 		}
 	}
+	//	No return value in ctor
+}
+
+template <typename T>
+Matrix <T>::Matrix (Matrix&& rhs) {
+	nRows_ = rhs.nRows_;
+	nCols_ = rhs.nCols_;
+	data_ = rhs.data_;
+	//	No return value in ctor
 }
 
 template <typename T>
@@ -250,6 +262,16 @@ Matrix <T>& Matrix <T>::operator = (const Matrix& rhs) {
 				data_[i][j] = rhs.data_[i][j];
 			}
 		}
+	}
+	return *this;
+}
+
+template <typename T>
+Matrix <T>& Matrix <T>::operator = (Matrix&& rhs) {
+	if (this != &rhs) {
+		nRows_ = rhs.nRows_;
+		nCols_ = rhs.nCols_;
+		std::swap (data_, rhs.data_);
 	}
 	return *this;
 }
@@ -336,17 +358,13 @@ Matrix <T>& Matrix <T>::operator -= (const Matrix& rhs) & {
 
 template <typename T>
 Matrix <T>& Matrix <T>::Transpose () & {
-	Matrix temp { *this };
-	delete [] data_;
-	std::swap (nRows_, nCols_);
-	
-	data_ = new T* [nRows_] {};
+	Matrix temp {nCols_, nRows_};
 	for (size_t i = 0; i < nRows_; ++i) {
-		data_[i] = new T [nCols_] {};
 		for (size_t j = 0; j < nCols_; ++j) {
-			data_[i][j] = temp.data_[j][i];
+			temp.data_[j][i] = data_[i][j];
 		}
 	}
+	*this = std::move (temp);
 	return *this;
 }
 
@@ -419,6 +437,7 @@ Matrix <T>& Matrix <T>::AddCols (size_t source, size_t destination, T factor) {
 template <typename T>
 Matrix <T> Matrix <T>::Zeros (size_t n) {
 	Matrix <T> temp {n};
+	//	No std::move here because of RVO
 	return temp;
 }
 
@@ -428,11 +447,12 @@ Matrix <T> Matrix <T>::Eye (size_t n) {
 	for (size_t i = 0; i < n; ++i) {
 		temp.data_[i][i] = static_cast <T> (1);
 	}
+	//	No std::move here because of RVO
 	return temp;
 }
 
 template <typename T>
-std::pair <size_t, size_t> Matrix <T>::Shape () const {
+pair_size_t Matrix <T>::Shape () const {
 	return std::make_pair (nRows_, nCols_);
 }
 
@@ -520,6 +540,7 @@ template <typename T>
 Matrix <T> operator + (const Matrix <T>& lhs, const Matrix <T>& rhs) {
 	Matrix <T> temp { lhs };
 	temp += rhs;
+	//	No std::move here because of RVO
 	return temp;
 }
 
@@ -527,6 +548,7 @@ template <typename T>
 Matrix <T> operator - (const Matrix <T>& lhs, const Matrix <T>& rhs) {
 	Matrix <T> temp { lhs };
 	temp -= rhs;
+	//	No std::move here because of RVO
 	return temp;
 }
 
@@ -534,6 +556,7 @@ template <typename T>
 Matrix <T> operator * (const T number, const Matrix <T>& rhs) {
 	Matrix <T> temp { rhs };
 	temp *= number;
+	//	No std::move here because of RVO
 	return temp;
 }
 
@@ -541,6 +564,7 @@ template <typename T>
 Matrix <T> operator * (const Matrix <T>& lhs, const T number) {
 	Matrix <T> temp { lhs };
 	temp *= number;
+	//	No std::move here because of RVO
 	return temp;
 }
 
@@ -548,5 +572,6 @@ template <typename T>
 Matrix <T> operator * (const Matrix <T>& lhs, const Matrix <T>& rhs) {
 	Matrix <T> temp { lhs };
 	temp *= rhs;
+	//	No std::move here because of RVO
 	return temp;
 }
