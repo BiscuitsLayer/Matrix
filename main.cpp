@@ -2,10 +2,10 @@
 
 #include "MatrixLib.hpp"
 
-//#define DEBUG
+#define NDEBUG
 
 int main () {
-#ifdef DEBUG
+#ifdef NDEBUG
 	Linear::Matrix <double> m1 {};
 	std::cin >> m1;
 	std::cout << m1.Determinant (Determinant::Type::GAUSS) <<std::endl;
