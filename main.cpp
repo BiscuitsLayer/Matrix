@@ -1,24 +1,19 @@
 #include <fstream>
+#include <algorithm>
 
 #include "MatrixLib.hpp"
-
-#define NDEBUG
+#include "Solver/SolverLib.hpp"
 
 int main () {
-#ifdef NDEBUG
-	Linear::Matrix <double> m1 {};
-	std::cin >> m1;
-	std::cout << m1.Determinant (Determinant::Type::GAUSS) <<std::endl;
-#else
-	Linear::Matrix <double> m2 {};
-	std::ifstream infile { "Test/test5.txt" };
-	if (!infile) {
-		std::cerr << "Error opening file" << std::endl;
-	}
-	else {
-		infile >> m2;
-		std::cout << m2 << std::endl << m2.Determinant (Determinant::Type::GAUSS) << std::endl;
-	}
-#endif
+	Linear::Matrix <double> m1 {}, m2 {};
+	std::cin >> m1 >> m2;
+	
+	//std::cout << m1 << std::endl;
+	//std::cerr << m1.Rank () << std::endl;
+	//std::cout << m2 << std::endl;
+	//std::cerr << m2.Rank () << std::endl;
+	
+	Solver solver { m1, m2 };
+	solver.Execute ();
 	return 0;
 }
