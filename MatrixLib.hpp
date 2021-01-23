@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <iomanip>
 #include <exception>
 
 #define DEBUG(var) std::cout << "DEBUG: " << #var << " = " << var << std::endl;
@@ -48,7 +49,6 @@ namespace Linear {
 			int nRows_ = 0, nCols_ = 0;
 			T** data_ = nullptr;
 			int gaussFactor_ = 1;
-
 		public:
 			//	CTORS AND DTORS
 						Matrix 	(int rows, int cols, T value = T{});
@@ -75,7 +75,7 @@ namespace Linear {
 			Matrix& Transpose 	() &;
 			Matrix& Negate 		() &;
 			Matrix& Clear 		() &;
-			Matrix& Diagonalize (bool additional = false) &;
+			Matrix& Diagonalize (int& rank, bool additional = false) &;
 
 			//	ROW AND COLUMN OPERATIONS
 			Matrix& SwapRows 	(int lhs, int rhs);
@@ -88,7 +88,7 @@ namespace Linear {
 			static Matrix Eye 	(int n);
 
 			//	GETTERS
-			pair_int Shape		() const;
+			pair_int 	Shape		() const;
 			int 		Size 		() const;
 			T 			Trace 		() const;
 			const T& 	At 			(int i, int j) const;
@@ -173,8 +173,9 @@ double Determinant::Gauss (const Linear::Matrix <double>& matrix) {
 	}
 	else {
 		double ans = 1.0;
+		int rank = 0;
 		Linear::Matrix <double> temp = matrix;
-		temp.Diagonalize ();
+		temp.Diagonalize (rank);
 		ans *= temp.GaussFactor ();
 
 		for (int i = 0; i < nRows; ++i) {
@@ -402,13 +403,14 @@ Linear::Matrix <T>& Linear::Matrix <T>::Clear () & {
 }
 
 template <typename T>
-Linear::Matrix <T>& Linear::Matrix <T>::Diagonalize (bool additional) & {
+Linear::Matrix <T>& Linear::Matrix <T>::Diagonalize (int& rank, bool additional) & {
+	gaussFactor_ = 1;
 	//	DIRECT GAUSS
 	for (int i = 0; i < std::min <int> (nRows_, nCols_); ++i) {
 		T maxElement = At (i, i);
 		int maxIdx = i;
 		for (int j = i + 1; j < nRows_; ++j) {
-			if (At (j, i) > maxElement) {
+			if (std::fabs (At (j, i)) > std::fabs (maxElement)) {
 				maxElement = At (j, i);
 				maxIdx = j;
 			}
@@ -424,10 +426,13 @@ Linear::Matrix <T>& Linear::Matrix <T>::Diagonalize (bool additional) & {
 			AddRows (i, j, (- 1) * (At (j, i) / At (i, i)));
 		}
 	}
+	
 	//  REVERSE GAUSS
-    for (int i = std::min (nRows_, nCols_) - 1 - (additional ? 1 : 0); i >= 0; --i) {
+	int columnStartValue = (nCols_ - 1) - (additional ? 1 : 0);
+    for (int i = std::min (nRows_ - 1, columnStartValue) ; i >= 0; --i) {
         if (std::fabs (At (i, i)) >= Linear::EPS) {
-            int divisor = At (i, i);
+            double divisor = At (i, i);
+			gaussFactor_ *= divisor;
             for (int j = nCols_ - 1; j >= i; --j) {
                 At (i, j) /= divisor;
             }
@@ -436,6 +441,15 @@ Linear::Matrix <T>& Linear::Matrix <T>::Diagonalize (bool additional) & {
 		    }
         }
     }
+	//	CALCULATE RANK
+	int ans = 0;
+	for (int i = 0; i < std::min <int> (nRows_, nCols_); ++i) {
+		if (std::fabs (At (i, i)) > EPS) {
+			++ans;
+			continue;
+		}
+	}
+	rank = ans;
 	return *this;
 }
 
@@ -547,7 +561,7 @@ void Linear::Matrix <T>::Dump (std::ostream& stream) const {
 	stream.precision (2);
 	for (int i = 0; i < nRows_; ++i) {
 		for (int j = 0; j < nCols_; ++j) {
-			stream << (j == 0 ? "" : " ") << (std::fabs (data_[i][j]) < EPS ? 0 : data_[i][j]);
+			stream << std::setw (6) << (std::fabs (data_[i][j]) < EPS ? 0 : data_[i][j]);
 		}
 		if (i != nRows_ - 1)
 			stream << std::endl;
@@ -583,17 +597,9 @@ T Linear::Matrix <T>::Determinant (Determinant::Type type) const {
 
 template <typename T>
 int Linear::Matrix <T>::Rank () const {
-	auto shape = Shape ();
-	Linear::Matrix <T> temp = *this;
-	temp.Diagonalize ();
-	std::cerr << temp << std::endl;
-	int ans = 0;
-	for (int i = 0; i < std::min <int> (temp.nRows_, temp.nCols_); ++i) {
-		if (std::fabs (temp.At (i, i)) > EPS) {
-			++ans;
-			continue;
-		}
-	}
+	Matrix <T> temp = *this;
+	int ans = -1;
+	temp.Diagonalize (ans);
 	return ans;
 }
 
