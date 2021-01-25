@@ -8,7 +8,8 @@
 
 #define DEBUG(var) std::cout << "DEBUG: " << #var << " = " << var << std::endl;
 
-std::ostream& operator << (std::ostream& stream, const std::vector <double>& vec) {
+template <typename T>
+std::ostream& operator << (std::ostream& stream, const std::vector <T>& vec) {
 	for (int i = 0; i < vec.size (); ++i) {
 		stream << vec [i] << ' ';
 	}
