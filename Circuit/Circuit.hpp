@@ -16,72 +16,118 @@ bool operator < (Edge lhs, Edge rhs) {
 }
 
 using RV = std::pair <double, double>; //   Resistance + voltage
+const RV emptyRV = { -1, -1 };
 
-class Circuit {
+class DFS final {
     private:
-        std::vector <std::vector <RV> > adjTable_ {};   //  TODO: Matrix можно
-        std::set <std::set <Vertex> > cyclesSets_ {};   //  Auxiliary set to make cycles unique
-        std::vector <std::vector <Vertex> > cycles_ {};
-        std::map <Edge, int> edgesToVariables_;
-        
-    public:
-        Circuit (const std::vector <std::vector <RV> >& adjTable):
-            adjTable_ (adjTable),
-            cyclesSets_ ({}),
-            cycles_ ({}),
-            edgesToVariables_ ({})
-            {}
+        //  WORK
+        std::vector <std::vector <RV> >* table_ {};
+        std::vector <bool> used_ {};
+        std::vector <int> curPath_ {};
+        std::set <std::set <Vertex> > cyclesSets_ {};
 
-        void DeepFirstSearch (int cur, int prev, std::vector <bool>* used, std::vector <int>* curPath) {
-            if ((*used)[cur]) {
+        //  RESULT
+        std::vector <std::vector <Vertex> > cycles_ {};
+
+        void VertexEntry (int cur) {
+            used_[cur] = true;
+            curPath_.push_back (cur);
+        }
+
+        void VertexOutro (int cur) {
+            curPath_.pop_back ();
+            used_[cur] = false;
+        }
+
+        bool PushIfDifferent () {
+            int temp = cyclesSets_.size ();
+            cyclesSets_.insert ({ curPath_.begin (), curPath_.end () });
+            if (cyclesSets_.size () != temp) {
+                //  Size increased, => different cycle
+                cycles_.push_back (curPath_);
+                return true;
+            }
+            return false;
+        }
+
+        void Step (int cur, int prev) {
+            if (used_[cur]) {
                 //  it is a complete cycle only if the first vertex equals the last one
-                if (cur != (*curPath)[0]) {
+                if (cur != curPath_.front ()) {
                     return;
                 }
-
-                int temp = cyclesSets_.size ();
-                curPath->push_back (cur);
-                cyclesSets_.insert ({ curPath->begin (), curPath->end () });
-                if (cyclesSets_.size () != temp) {
-                    //  We have found a different cycle!
-                    cycles_.push_back (*curPath);
-                }
-                
-                curPath->pop_back ();
+                curPath_.push_back (cur);
+                PushIfDifferent ();
+                curPath_.pop_back ();
                 return;
             }
             else {
-                (*used)[cur] = true;
-                curPath->push_back (cur);
-
-                RV emptyRV = { -1, -1 };
-                for (int i = 0; i < adjTable_.size (); ++i) {
-                    if ((adjTable_[cur][i] != emptyRV) && (i != cur) && (i != prev)) {
-                        DeepFirstSearch (i, cur, used, curPath);
+                VertexEntry (cur);
+                for (int i = 0; i < table_->size (); ++i) {
+                    if (((*table_)[cur][i] != emptyRV) && (i != cur) && (i != prev)) {
+                        Step (i, cur);
                     }
                 }
-
-                curPath->pop_back ();
-                (*used)[cur] = false;
+                VertexOutro (cur);
             }
         }
 
-        void GetCycles () {
-            int size = adjTable_.size ();
-            std::vector <bool> used (size, false);
-            std::vector <int> curPath {};
+    public:
+        DFS (std::vector <std::vector <RV> >* table):
+            table_ (table),
+            used_ (table->size (), false),
+            curPath_ ({})
+            {}
 
-            for (int i = 0; i < size; ++i) {
-                DeepFirstSearch (i, -1, &used, &curPath);
+        std::vector <std::vector <Vertex> > GetCycles () {
+            for (int i = 0; i < used_.size (); ++i) {
+                Step (i, -1);
             }
-            //  show ans
-            std::cerr << "Cycles:" << std::endl;
-            for (auto& cycle : cycles_) {
-                std::cout << cycle << std::endl;
+            return cycles_;
+        }
+};
+
+class Circuit final {
+    private:
+        //  GIVEN
+        std::vector <std::vector <RV> > adjTable_ {};   //  TODO: Matrix можно
+
+        //  TOOLS
+        DFS dfs_;
+
+        //  CALCULATED
+        int maxIdx_ = 0;
+        std::map <Edge, int> edgesToVariables_ {};
+        std::vector <std::vector <Vertex> > cycles_ {};
+
+        //  RESULT
+        Linear::Matrix <double> lhs_ {};
+        Linear::Matrix <double> rhs_ {};
+
+        void ComputeMaxIdx () {
+            for (int i = 0; i < adjTable_.size (); ++i) {
+                for (int j = 0; j < adjTable_[i].size (); ++j) {
+                    if (adjTable_[i][j] != emptyRV) {
+                        Edge edge = { i, j };
+                        bool containsReversedEdge = false;
+                        int variableIdx = GetVariableIdx (edge, containsReversedEdge);
+                        maxIdx_ = std::max <int> (maxIdx_, variableIdx);
+                    }
+                }                
             }
         }
 
-        int GetVariable (Edge edge, bool& containsReversedEdge) {
+    public:
+        Circuit (const std::vector <std::vector <RV> >& adjTable):
+            adjTable_ (adjTable),
+            dfs_ (&adjTable_),
+            edgesToVariables_ ({}),
+            cycles_ (dfs_.GetCycles ())
+            {
+                ComputeMaxIdx ();
+            }
+
+        int GetVariableIdx (Edge edge, bool& containsReversedEdge) {
             if (edge.first == edge.second) {
                 throw std::invalid_argument ("Cyclic edge");
             }
@@ -107,70 +153,36 @@ class Circuit {
         }
 
         Linear::Matrix <double> FirstKhLaw () {
-            int adjTableSize = adjTable_.size ();
-            std::vector <std::vector <double> > lhs (adjTableSize, std::vector <double> (adjTableSize));    //  main part of the Matrix
-            std::vector <double> rhs (adjTableSize, 0);                                                     //  additional column
-            int maxIdx = 0;
-            RV emptyRV = { -1, -1 };
-            for (int i = 0; i < adjTableSize; ++i) {
-                //  calculate number of variables to resize
-                for (int j = 0; j < adjTableSize; ++j) {
+            Linear::Matrix <double> lhs { adjTable_.size (), maxIdx_ + 1 };
+            Linear::Matrix <double> rhs { adjTable_.size (), 1, 0 };
+            for (int i = 0; i < adjTable_.size (); ++i) {
+                for (int j = 0; j < adjTable_[i].size (); ++j) {
                     if (adjTable_[i][j] != emptyRV) {
                         Edge edge = { i, j };
                         bool containsReversedEdge = false;
-                        int variableIdx = GetVariable (edge, containsReversedEdge);
-                        maxIdx = std::max <int> (maxIdx, variableIdx);
-                    }
-                }
-                //  resize
-                lhs[i].resize (maxIdx + 1);
-                //  write the law
-                for (int j = 0; j < adjTableSize; ++j) {
-                    if (adjTable_[i][j] != emptyRV) {
-                        Edge edge = { i, j };
-                        bool containsReversedEdge = false;
-                        int variableIdx = GetVariable (edge, containsReversedEdge);
-                        lhs[i][variableIdx] = 1 * (containsReversedEdge ? 1 : -1);
+                        int variableIdx = GetVariableIdx (edge, containsReversedEdge);
+                        lhs.At (i, variableIdx) = 1 * (containsReversedEdge ? 1 : -1);
                     }
                 }
             }
-            //  show ans
-            for (int i = 0; i < lhs.size (); ++i) {
-                std::cerr << lhs[i] << "= " << rhs[i] << std::endl;
-            }
-            return Linear::Matrix <double> {};
+            DEBUG (lhs);
+            DEBUG (rhs);
         }
 
         Linear::Matrix <double> SecondKhLaw () {
-            int cyclesSize = cycles_.size ();
-            std::vector <std::vector <double> > lhs (cyclesSize, std::vector <double> {});       //  main part of the Matrix
-            std::vector <double> rhs (cyclesSize, 0);                                            //  additional column
-            int maxIdx = 0;
-            for (int i = 0; i < cyclesSize; ++i) {
-                //  calculate number of variables to resize
+            Linear::Matrix <double> lhs { cycles_.size (), maxIdx_ + 1 };
+            Linear::Matrix <double> rhs { cycles_.size (), 1, 0 };
+            for (int i = 0; i < cycles_.size (); ++i) {
                 for (int j = 0; j < cycles_[i].size () - 1; ++j) {
                     Edge edge = { cycles_[i][j], cycles_[i][j+1] };
                     bool containsReversedEdge = false;
-                    int variableIdx = GetVariable (edge, containsReversedEdge);
-                    maxIdx = std::max <int> (maxIdx, variableIdx);
-                }
-                //  resize
-                lhs[i].resize (maxIdx + 1);
-                //  get resistance coefficients
-                for (int j = 0; j < cycles_[i].size () - 1; ++j) {
-                    Edge edge = { cycles_[i][j], cycles_[i][j+1] };
-                    bool containsReversedEdge = false;
-                    int variableIdx = GetVariable (edge, containsReversedEdge);
-                    lhs[i][variableIdx] = adjTable_[edge.first][edge.second].first * (containsReversedEdge ? 1 : -1);
-                    rhs[i] += adjTable_[edge.first][edge.second].second;
+                    int variableIdx = GetVariableIdx (edge, containsReversedEdge);
+                    lhs.At (i, variableIdx) = adjTable_[edge.first][edge.second].first * (containsReversedEdge ? 1 : -1);
+                    rhs.At (i, 0) += adjTable_[edge.first][edge.second].second;
                 }
             }
-            //  show ans
-            for (int i = 0; i < lhs.size (); ++i) {
-                lhs[i].resize (maxIdx + 1, 0);
-                std::cerr << lhs[i] << "= " << rhs[i] << std::endl;
-            }
-            return Linear::Matrix <double> {};
+            DEBUG (lhs);
+            DEBUG (rhs);
         }
 
 };

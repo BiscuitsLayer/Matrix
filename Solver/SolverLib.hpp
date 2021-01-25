@@ -2,7 +2,7 @@
 
 #include "../MatrixLib.hpp"
 
-class Solver {
+class Solver final {
     private:
         //  GIVEN
         Linear::Matrix <double> main_ {};
