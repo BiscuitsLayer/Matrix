@@ -2,4 +2,4 @@ all:	b r
 b:
 		g++ main.cpp -ggdb3 -o main
 r:
-		./main < Test/7
+		./main < Test/test_det1.txt

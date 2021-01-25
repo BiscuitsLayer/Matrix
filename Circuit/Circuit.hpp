@@ -108,7 +108,7 @@ class Circuit {
 
         Linear::Matrix <double> FirstKhLaw () {
             int adjTableSize = adjTable_.size ();
-            std::vector <std::vector <double> > lhs (adjTableSize, std::vector <double> (adjTableSize));    //   main part of the Matrix
+            std::vector <std::vector <double> > lhs (adjTableSize, std::vector <double> (adjTableSize));    //  main part of the Matrix
             std::vector <double> rhs (adjTableSize, 0);                                                     //  additional column
             int maxIdx = 0;
             RV emptyRV = { -1, -1 };
@@ -138,11 +138,12 @@ class Circuit {
             for (int i = 0; i < lhs.size (); ++i) {
                 std::cerr << lhs[i] << "= " << rhs[i] << std::endl;
             }
+            return Linear::Matrix <double> {};
         }
 
         Linear::Matrix <double> SecondKhLaw () {
             int cyclesSize = cycles_.size ();
-            std::vector <std::vector <double> > lhs (cyclesSize, std::vector <double> {});       //   main part of the Matrix
+            std::vector <std::vector <double> > lhs (cyclesSize, std::vector <double> {});       //  main part of the Matrix
             std::vector <double> rhs (cyclesSize, 0);                                            //  additional column
             int maxIdx = 0;
             for (int i = 0; i < cyclesSize; ++i) {
@@ -169,6 +170,7 @@ class Circuit {
                 lhs[i].resize (maxIdx + 1, 0);
                 std::cerr << lhs[i] << "= " << rhs[i] << std::endl;
             }
+            return Linear::Matrix <double> {};
         }
 
 };

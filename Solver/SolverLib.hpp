@@ -17,16 +17,17 @@ class Solver {
             {}
         void Execute () {
             auto shape = main_.Shape ();
-            auto mainVec = static_cast <std::vector <double> > (main_.Transpose ());
+            main_.Transpose ();
+            auto mainVec = static_cast <std::vector <double> > (main_);
 	        auto additionalVec = static_cast <std::vector <double> > (additional_);
 	        mainVec.insert (mainVec.end(), additionalVec.begin (), additionalVec.end ());
 	        Linear::Matrix <double> result { shape.second + 1, shape.first, mainVec };
             
-            int mainRank = -1, resultRank = -1;
             main_.Transpose ();
             result.Transpose ();
-            main_.Diagonalize (mainRank, false);
-            result.Diagonalize (resultRank, true);
+            main_.Diagonalize (false);
+            result.Diagonalize (true);
+            int mainRank = main_.Rank (), resultRank = result.Rank ();
             
             if (mainRank != resultRank) {
                 std::cout << "No solutions: mainRank = " << mainRank << ", resultRank = " << resultRank << std::endl;
