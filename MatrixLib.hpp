@@ -48,7 +48,6 @@ namespace Linear {
 			T** data_ = nullptr;
 
 			//	AUXILIARY METHODS
-			
 			void ReverseGauss 	(bool skipAdditional) &;
 		public:
 			//	CTORS AND DTORS
@@ -83,10 +82,12 @@ namespace Linear {
 			void MakeEye 		(bool skipAdditional = false) &;
 
 			//	ROW AND COLUMN OPERATIONS
-			Matrix& SwapRows 	(int lhs, int rhs);
-			Matrix& AddRows		(int source, int destination, T factor);
-			Matrix& SwapCols 	(int lhs, int rhs);
-			Matrix& AddCols 	(int source, int destination, T factor);
+			void SwapRows 	(int lhs, int rhs);
+			void AddRows	(int source, int destination, T factor);
+			void AppendRow	(Matrix <T>& additional, bool inFront = false);
+			void SwapCols 	(int lhs, int rhs);
+			void AddCols 	(int source, int destination, T factor);
+			void AppendCol	(Matrix <T>& additional, bool inFront = false);
 
 			//	BASIC TYPES
 			static Matrix Zeros (int n);
@@ -326,15 +327,14 @@ Linear::Matrix <T>& Linear::Matrix <T>::operator *= (const T number) & {
 template <typename T>
 Linear::Matrix <T>& Linear::Matrix <T>::operator *= (const Matrix& rhs) & {	
 	// MULTIPLY BY ANOTHER MATRIX (OF THE SAME TYPE)
-	auto lhsShape = Shape (), rhsShape = rhs.Shape ();
-	if (lhsShape.second != rhsShape.first) {
+	if (this->nCols_ != rhs.nRows_) {
 		throw (std::invalid_argument ("Trying to multiply by a matrix with inappropriate size."));
 	}
 	else {
-		Matrix <T> ans { lhsShape.first, rhsShape.second };
-		for (int i = 0; i < lhsShape.first; ++i) {
-			for (int j = 0; j < rhsShape.second; ++j) {
-				for (int k = 0; k < lhsShape.second; ++k) {
+		Matrix <T> ans { this->nRows_, rhs.nCols_ };
+		for (int i = 0; i < this->nRows_; ++i) {
+			for (int j = 0; j < rhs.nCols_; ++j) {
+				for (int k = 0; k < this->nCols_; ++k) {
 					ans.data_[i][j] += data_[i][k] * rhs.data_[k][j];
 				}
 			}
@@ -346,7 +346,7 @@ Linear::Matrix <T>& Linear::Matrix <T>::operator *= (const Matrix& rhs) & {
 
 template <typename T>
 Linear::Matrix <T>& Linear::Matrix <T>::operator += (const Matrix& rhs) & {
-	if (this->Shape () != rhs.Shape ()) {
+	if (Shape () != rhs.Shape ()) {
 		throw (std::invalid_argument ("Matrix sizes do not match."));
 	}
 	else {
@@ -361,7 +361,7 @@ Linear::Matrix <T>& Linear::Matrix <T>::operator += (const Matrix& rhs) & {
 
 template <typename T>
 Linear::Matrix <T>& Linear::Matrix <T>::operator -= (const Matrix& rhs) & {
-	if (this->Shape () != rhs.Shape ()) {
+	if (Shape () != rhs.Shape ()) {
 		throw (std::invalid_argument ("Matrix sizes do not match."));
 	}
 	else {
@@ -449,7 +449,7 @@ void Linear::Matrix <T>::MakeEye (bool skipAdditional) & {
 	int columnStartValue = (nCols_ - 1) - (skipAdditional ? 1 : 0);
     for (int i = std::min (nRows_ - 1, columnStartValue) ; i >= 0; --i) {
         if (std::fabs (At (i, i)) >= Linear::EPS) {
-            double divisor = At (i, i);
+            T divisor = At (i, i);
             for (int j = nCols_ - 1; j >= i; --j) {
                 At (i, j) /= divisor;
             }
@@ -458,18 +458,17 @@ void Linear::Matrix <T>::MakeEye (bool skipAdditional) & {
 }
 
 template <typename T>
-Linear::Matrix <T>& Linear::Matrix <T>::SwapRows (int lhs, int rhs) {
+void Linear::Matrix <T>::SwapRows (int lhs, int rhs) {
 	if (lhs >= nRows_ || rhs >= nRows_ || lhs == rhs) {
 		throw (std::invalid_argument ("Wrong lhs / rhs value."));
 	}
 	else {
 		std::swap (data_[lhs], data_[rhs]);
 	}
-	return *this;
 }
 
 template <typename T>
-Linear::Matrix <T>& Linear::Matrix <T>::AddRows (int source, int destination, T factor) {
+void Linear::Matrix <T>::AddRows (int source, int destination, T factor) {
 	if (source >= nRows_ || destination >= nRows_ || source == destination) {
 		throw (std::invalid_argument ("Wrong source / destination value."));
 	}
@@ -478,11 +477,29 @@ Linear::Matrix <T>& Linear::Matrix <T>::AddRows (int source, int destination, T 
 			data_[destination][i] += data_[source][i] * factor;
 		}
 	}
-	return *this;
 }
 
 template <typename T>
-Linear::Matrix <T>& Linear::Matrix <T>::SwapCols (int lhs, int rhs) {
+void Linear::Matrix <T>::AppendRow (Matrix <T>& additional, bool inFront) {
+	if (additional.nRows_ != 1) {
+		throw std::invalid_argument ("Appending not a row!");
+	}
+    auto mainVec = static_cast <std::vector <T> > (*this);
+	auto additionalVec = static_cast <std::vector <T> > (additional);
+	Linear::Matrix <T> result {};
+	if (inFront) {
+		additionalVec.insert (additionalVec.end(), mainVec.begin (), mainVec.end ());
+		result = { nRows_ + 1, nCols_, additionalVec };
+	}
+	else {
+		mainVec.insert (mainVec.end(), additionalVec.begin (), additionalVec.end ());
+		result = { nRows_ + 1, nCols_, mainVec };
+	}
+	*this = result;
+}
+
+template <typename T>
+void Linear::Matrix <T>::SwapCols (int lhs, int rhs) {
 	if (lhs >= nCols_ || rhs >= nCols_ || lhs == rhs) {
 		throw (std::invalid_argument ("Wrong lhs / rhs value."));
 	}
@@ -491,11 +508,10 @@ Linear::Matrix <T>& Linear::Matrix <T>::SwapCols (int lhs, int rhs) {
 			std::swap (data_[i][lhs], data_[i][rhs]);
 		}
 	}
-	return *this;
 }
 
 template <typename T>
-Linear::Matrix <T>& Linear::Matrix <T>::AddCols (int source, int destination, T factor) {
+void Linear::Matrix <T>::AddCols (int source, int destination, T factor) {
 	if (source >= nCols_ || destination >= nCols_ || source == destination) {
 		throw (std::invalid_argument ("Wrong source / destination value."));
 	}
@@ -504,7 +520,28 @@ Linear::Matrix <T>& Linear::Matrix <T>::AddCols (int source, int destination, T 
 			data_[i][destination] += data_[i][source] * factor;
 		}
 	}
-	return *this;
+}
+
+template <typename T>
+void Linear::Matrix <T>::AppendCol (Matrix <T>& additional, bool inFront) {
+	if (additional.nCols_ != 1) {
+		throw std::invalid_argument ("Appending not a column!");
+	}
+    Transpose ();
+    auto mainVec = static_cast <std::vector <T> > (*this);
+	auto additionalVec = static_cast <std::vector <T> > (additional);
+	Transpose ();
+	Linear::Matrix <T> result {};
+	if (inFront) {
+		additionalVec.insert (additionalVec.end(), mainVec.begin (), mainVec.end ());
+		result = { nCols_ + 1, nRows_, additionalVec };
+	}
+	else {
+		mainVec.insert (mainVec.end(), additionalVec.begin (), additionalVec.end ());
+		result = { nCols_ + 1, nRows_, mainVec };
+	}
+	result.Transpose ();
+	*this = result;
 }
 
 template <typename T>
