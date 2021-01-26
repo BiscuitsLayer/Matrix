@@ -182,6 +182,10 @@ namespace yy {
     switch (this->kind ())
     {
       case symbol_kind::S_edge: // edge
+        value.copy< Edge > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_values: // values
         value.copy< RV > (YY_MOVE (that.value));
         break;
 
@@ -223,6 +227,10 @@ namespace yy {
     switch (this->kind ())
     {
       case symbol_kind::S_edge: // edge
+        value.move< Edge > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_values: // values
         value.move< RV > (YY_MOVE (s.value));
         break;
 
@@ -332,6 +340,10 @@ namespace yy {
     switch (that.kind ())
     {
       case symbol_kind::S_edge: // edge
+        value.YY_MOVE_OR_COPY< Edge > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_values: // values
         value.YY_MOVE_OR_COPY< RV > (YY_MOVE (that.value));
         break;
 
@@ -359,6 +371,10 @@ namespace yy {
     switch (that.kind ())
     {
       case symbol_kind::S_edge: // edge
+        value.move< Edge > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_values: // values
         value.move< RV > (YY_MOVE (that.value));
         break;
 
@@ -386,6 +402,10 @@ namespace yy {
     switch (that.kind ())
     {
       case symbol_kind::S_edge: // edge
+        value.copy< Edge > (that.value);
+        break;
+
+      case symbol_kind::S_values: // values
         value.copy< RV > (that.value);
         break;
 
@@ -412,6 +432,10 @@ namespace yy {
     switch (that.kind ())
     {
       case symbol_kind::S_edge: // edge
+        value.move< Edge > (that.value);
+        break;
+
+      case symbol_kind::S_values: // values
         value.move< RV > (that.value);
         break;
 
@@ -682,6 +706,10 @@ namespace yy {
       switch (yyr1_[yyn])
     {
       case symbol_kind::S_edge: // edge
+        yylhs.value.emplace< Edge > ();
+        break;
+
+      case symbol_kind::S_values: // values
         yylhs.value.emplace< RV > ();
         break;
 
@@ -713,14 +741,35 @@ namespace yy {
         {
           switch (yyn)
             {
+  case 2: // command: command edge "," values
+#line 67 "../Language/lang.y"
+                                                                { 
+													driver->TableAt (yystack_[2].value.as < Edge > ().first, yystack_[2].value.as < Edge > ().second) = yystack_[0].value.as < RV > ();
+													driver->TableAt (yystack_[2].value.as < Edge > ().second, yystack_[2].value.as < Edge > ().first) = RV { yystack_[0].value.as < RV > ().Resistance (), -1 * yystack_[0].value.as < RV > ().Voltage () };
+												}
+#line 751 "lang.tab.cc"
+    break;
+
   case 4: // edge: UINT "--" UINT
-#line 71 "../Language/lang.y"
-                                                        { yylhs.value.as < RV > () = RV { yystack_[2].value.as < unsigned int > (), yystack_[0].value.as < unsigned int > () }; }
-#line 720 "lang.tab.cc"
+#line 75 "../Language/lang.y"
+                                                                        { yylhs.value.as < Edge > () = Edge { yystack_[2].value.as < unsigned int > (), yystack_[0].value.as < unsigned int > () }; }
+#line 757 "lang.tab.cc"
+    break;
+
+  case 5: // values: DOUBLE resistance ";"
+#line 79 "../Language/lang.y"
+                                                                { yylhs.value.as < RV > () = RV { yystack_[2].value.as < double > (), 0 }; }
+#line 763 "lang.tab.cc"
+    break;
+
+  case 6: // values: DOUBLE resistance ";" DOUBLE voltage
+#line 80 "../Language/lang.y"
+                                                { yylhs.value.as < RV > () = RV { yystack_[4].value.as < double > (), yystack_[1].value.as < double > () }; }
+#line 769 "lang.tab.cc"
     break;
 
 
-#line 724 "lang.tab.cc"
+#line 773 "lang.tab.cc"
 
             default:
               break;
@@ -1024,8 +1073,8 @@ namespace yy {
   const signed char
   parser::yyrline_[] =
   {
-       0,    66,    66,    67,    71,    75,    76,    80,    81,    85,
-      86
+       0,    67,    67,    71,    75,    79,    80,    84,    85,    89,
+      90
   };
 
   void
@@ -1104,9 +1153,9 @@ namespace yy {
   }
 
 } // yy
-#line 1108 "lang.tab.cc"
+#line 1157 "lang.tab.cc"
 
-#line 89 "../Language/lang.y"
+#line 93 "../Language/lang.y"
 
 
 namespace yy {

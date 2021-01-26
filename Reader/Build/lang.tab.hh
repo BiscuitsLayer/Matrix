@@ -51,7 +51,7 @@
 	#include <algorithm>
 	#include <string>
 	#include <vector>
-	
+
 	//	CIRCUIT
 	#include "../../Circuit/Circuit.hpp"
 
@@ -380,13 +380,16 @@ namespace yy {
     union union_type
     {
       // edge
-      char dummy1[sizeof (RV)];
+      char dummy1[sizeof (Edge)];
+
+      // values
+      char dummy2[sizeof (RV)];
 
       // DOUBLE
-      char dummy2[sizeof (double)];
+      char dummy3[sizeof (double)];
 
       // UINT
-      char dummy3[sizeof (unsigned int)];
+      char dummy4[sizeof (unsigned int)];
     };
 
     /// The size of the largest semantic type.
@@ -515,6 +518,10 @@ namespace yy {
         switch (this->kind ())
     {
       case symbol_kind::S_edge: // edge
+        value.move< Edge > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_values: // values
         value.move< RV > (std::move (that.value));
         break;
 
@@ -545,6 +552,20 @@ namespace yy {
 #else
       basic_symbol (typename Base::kind_type t, const location_type& l)
         : Base (t)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Edge&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Edge& v, const location_type& l)
+        : Base (t)
+        , value (v)
         , location (l)
       {}
 #endif
@@ -614,6 +635,10 @@ namespace yy {
 switch (yykind)
     {
       case symbol_kind::S_edge: // edge
+        value.template destroy< Edge > ();
+        break;
+
+      case symbol_kind::S_values: // values
         value.template destroy< RV > ();
         break;
 
@@ -1282,7 +1307,7 @@ switch (yykind)
 
 
 } // yy
-#line 1286 "lang.tab.hh"
+#line 1311 "lang.tab.hh"
 
 
 

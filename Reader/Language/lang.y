@@ -14,7 +14,7 @@
 	#include <algorithm>
 	#include <string>
 	#include <vector>
-	
+
 	//	CIRCUIT
 	#include "../../Circuit/Circuit.hpp"
 
@@ -53,7 +53,8 @@
 %token <double> DOUBLE
 
 /* Объявление нетерминалов */
-%nterm <RV> edge
+%nterm <Edge> edge
+%nterm <RV> values
 
 /* Левоассоциативные и правоассоциативные лексемы */
 /* empty */
@@ -63,17 +64,20 @@
 %%
 
 command:
-    command edge COMMA values
+    command edge COMMA values					{ 
+													driver->TableAt ($2.first, $2.second) = $4;
+													driver->TableAt ($2.second, $2.first) = RV { $4.Resistance (), -1 * $4.Voltage () };
+												}
 |
 ;
 
 edge:
-    UINT DOUBLEDASH UINT				{ $$ = RV { $1, $3 }; }
+    UINT DOUBLEDASH UINT						{ $$ = Edge { $1, $3 }; }
 ;
 
 values:
-    DOUBLE resistance SEMICOLON 
-|   DOUBLE resistance SEMICOLON DOUBLE voltage
+    DOUBLE resistance SEMICOLON					{ $$ = RV { $1, 0 }; } 
+|   DOUBLE resistance SEMICOLON DOUBLE voltage	{ $$ = RV { $1, $4 }; } 
 ;
 
 resistance:

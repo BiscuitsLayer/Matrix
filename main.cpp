@@ -17,7 +17,5 @@ int main (int argc, char** argv) {
 	if (driver.parse ()) {
 		driver.execute ();
 	}
-
-	Linear::Matrix <RV> test {};
 	return 0;
 }

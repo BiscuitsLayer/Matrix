@@ -22,6 +22,7 @@ enum ErrorCodes {
 
 //  MATRIX
 #include "../../Matrix/Matrix.hpp"
+#include "../../Solver/Solver.hpp"
 
 namespace yy {
 
@@ -35,6 +36,7 @@ namespace yy {
             bool parse ();
             void execute ();
 
+            RV& TableAt (int i, int j);
             void PrintErrorAndExit (yy::location location, const std::string& message) const;
             std::string GetCurrentString () const;
 

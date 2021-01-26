@@ -8,16 +8,6 @@
 
 #define DEBUG(var) std::cout << "DEBUG: " << #var << " = " << var << std::endl;
 
-using RV = std::pair <double, double>; //   Resistance + voltage
-
-template <typename T>
-std::ostream& operator << (std::ostream& stream, const std::vector <T>& vec) {
-	for (int i = 0; i < vec.size (); ++i) {
-		stream << vec [i] << ' ';
-	}
-	return stream;
-}
-
 //	Генератор тестов (+ добавить ответов для E2E тестов)
 //	Exception-safety в операторах копирования и присваивания
 
@@ -74,8 +64,9 @@ namespace Linear {
 			Matrix& operator += (const Matrix& rhs) &;
 			Matrix& operator -= (const Matrix& rhs) &;
 			operator std::vector <T>  ();
+			void Resize 	(PairInt shape) &;
 			void Transpose 	() &;
-			void Negate 		() &;
+			void Negate 	() &;
 			void Clear 		() &;
 			void Diagonalize (bool skipAdditional = false) &;
 
@@ -364,8 +355,19 @@ Linear::Matrix <T>::operator std::vector <T> () {
 }
 
 template <typename T>
+void Linear::Matrix <T>::Resize (PairInt shape) & {
+	Matrix <T> ans { shape.first, shape.second };
+	for (int i = 0; i < std::min <int> (shape.first, nRows_); ++i) {
+		for (int j = 0; j < std::min <int> (shape.second, nCols_); ++j) {
+			ans.At (i, j) = At (i, j);
+		}
+	}
+	*this = ans;
+}
+
+template <typename T>
 void Linear::Matrix <T>::Transpose () & {
-	Matrix temp {nCols_, nRows_};
+	Matrix <T> temp {nCols_, nRows_};
 	for (int i = 0; i < nRows_; ++i) {
 		for (int j = 0; j < nCols_; ++j) {
 			temp.data_[j][i] = data_[i][j];
@@ -541,7 +543,7 @@ Linear::Matrix <T> Linear::Matrix <T>::Eye (int n) {
 
 template <typename T>
 Linear::PairInt Linear::Matrix <T>::Shape () const {
-	return std::make_pair (nRows_, nCols_);
+	return PairInt { nRows_, nCols_ };
 }
 
 template <typename T>
@@ -578,13 +580,7 @@ void Linear::Matrix <T>::Dump (std::ostream& stream) const {
 	stream.precision (2);
 	for (int i = 0; i < nRows_; ++i) {
 		for (int j = 0; j < nCols_; ++j) {
-			//	TODO: сейчас будет дикий костылище, который предстоит исправить
-			//if (std::is_same <T, RV>::value) {
-				stream << std::left << std::setw (10) << "(" << data_[i][j].first << ", " << data_[i][j].second << ")";
-			/*}
-			else {
-				stream << std::left << std::setw (10) << data_[i][j];
-			}*/
+			stream << std::left << std::setw (10) << data_[i][j];
 		}
 		if (i != nRows_ - 1)
 			stream << std::endl;
@@ -682,6 +678,3 @@ Linear::Matrix <T> Linear::operator * (const Matrix <T>& lhs, const Matrix <T>& 
 	//	No std::move here because of RVO
 	return temp;
 }
-
-//	TODO:
-using PairMatrix = std::pair <Linear::Matrix <double>, Linear::Matrix <double>>;

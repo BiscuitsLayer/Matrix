@@ -41,7 +41,22 @@ bool yy::LangDriver::parse () {
 }
 
 void yy::LangDriver::execute () {
-    std::cout << adjTable_ << std::endl;
+    Circuit circuit { adjTable_ };
+    PairMatrix temp = circuit.Execute ();
+    Solver solver { temp.first, temp.second };
+    temp = solver.Execute ();
+    DEBUG (temp.first);
+    DEBUG (temp.second);
+}
+
+RV& yy::LangDriver::TableAt (int i, int j) {
+    auto shape = adjTable_.Shape ();
+    shape.first = std::max <int> (i + 1, shape.first);
+    shape.second = std::max <int> (j + 1, shape.second);
+    if (shape != adjTable_.Shape ()) {
+        adjTable_.Resize (shape);
+    }
+    return adjTable_.At (i, j);
 }
 
 void yy::LangDriver::PrintErrorAndExit (yy::location location, const std::string& message) const {

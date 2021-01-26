@@ -11,13 +11,36 @@ using Edge = std::pair <Vertex, Vertex>;
 //  So we can make them keys in std::map
 bool operator < (Edge lhs, Edge rhs);
 
-using RV = std::pair <double, double>; //   Resistance + voltage
-const RV emptyRV = { -1, -1 };
+struct RV {  //  Resistance + voltage
+    public:
+        std::pair <double, double> data_ {};
+        RV ():
+            data_ ({ -1, -1 })
+            {}
+        RV (double resistance, double voltage):
+            data_ ({ resistance, voltage })
+            {}
+        RV (std::pair <double, double> pair):
+            data_ (pair)
+            {}
+            
+        double& Resistance () {
+            return data_.first;
+        }
+        double& Voltage () {
+            return data_.second;
+        }
+};
+
+bool operator != (RV lhs, RV rhs);
+std::ostream& operator << (std::ostream& stream, RV rv);
+
+using PairMatrix = std::pair <Linear::Matrix <double>, Linear::Matrix <double>>;
 
 class DFS final {
     private:
         //  WORK
-        std::vector <std::vector <RV>>* table_ {};
+        Linear::Matrix <RV>* table_ {};
         std::vector <bool> used_ {};
         std::vector <int> curPath_ {};
         std::set <std::set <Vertex>> cyclesSets_ {};
@@ -59,8 +82,8 @@ class DFS final {
             }
             else {
                 VertexEntry (cur);
-                for (int i = 0; i < table_->size (); ++i) {
-                    if (((*table_)[cur][i] != emptyRV) && (i != cur) && (i != prev)) {
+                for (int i = 0; i < table_->Shape ().first; ++i) {
+                    if (((*table_).At (cur, i) != RV {}) && (i != cur) && (i != prev)) {
                         Step (i, cur);
                     }
                 }
@@ -69,9 +92,9 @@ class DFS final {
         }
 
     public:
-        DFS (std::vector <std::vector <RV>>* table):
+        DFS (Linear::Matrix <RV>* table):
             table_ (table),
-            used_ (table->size (), false),
+            used_ (table->Shape ().first, false),
             curPath_ ({})
             {}
 
@@ -86,7 +109,7 @@ class DFS final {
 class Circuit final {
     private:
         //  GIVEN
-        std::vector <std::vector <RV>> adjTable_ {};   //  TODO: Matrix можно
+        Linear::Matrix <RV> adjTable_ {};   //  TODO: Matrix можно
 
         //  TOOLS
         DFS dfs_;
@@ -101,9 +124,9 @@ class Circuit final {
         Linear::Matrix <double> rhs_ {};
 
         void ComputeMaxIdx () {
-            for (int i = 0; i < adjTable_.size (); ++i) {
-                for (int j = 0; j < adjTable_[i].size (); ++j) {
-                    if (adjTable_[i][j] != emptyRV) {
+            for (int i = 0; i < adjTable_.Shape ().first; ++i) {
+                for (int j = 0; j < adjTable_.Shape ().second; ++j) {
+                    if (adjTable_.At (i, j) != RV {}) {
                         Edge edge = { i, j };
                         bool containsReversedEdge = false;
                         int variableIdx = GetVariableIdx (edge, containsReversedEdge);
@@ -114,7 +137,7 @@ class Circuit final {
         }
 
     public:
-        Circuit (const std::vector <std::vector <RV>>& adjTable):
+        Circuit (const Linear::Matrix <RV>& adjTable):
             adjTable_ (adjTable),
             dfs_ (&adjTable_),
             edgesToVariables_ ({}),
@@ -149,12 +172,12 @@ class Circuit final {
         }
 
         PairMatrix FirstKhLaw () {
-            int adjTableSize = adjTable_.size ();   //  to avoid static_cast
+            int adjTableSize = adjTable_.Shape ().first;   //  to avoid static_cast
             Linear::Matrix <double> lhs { adjTableSize, maxIdx_ + 1 };
             Linear::Matrix <double> rhs { adjTableSize, 1, 0 };
-            for (int i = 0; i < adjTable_.size (); ++i) {
-                for (int j = 0; j < adjTable_[i].size (); ++j) {
-                    if (adjTable_[i][j] != emptyRV) {
+            for (int i = 0; i < adjTable_.Shape ().first; ++i) {
+                for (int j = 0; j < adjTable_.Shape ().second; ++j) {
+                    if (adjTable_.At (i, j) != RV {}) {
                         Edge edge = { i, j };
                         bool containsReversedEdge = false;
                         int variableIdx = GetVariableIdx (edge, containsReversedEdge);
@@ -174,8 +197,8 @@ class Circuit final {
                     Edge edge = { cycles_[i][j], cycles_[i][j+1] };
                     bool containsReversedEdge = false;
                     int variableIdx = GetVariableIdx (edge, containsReversedEdge);
-                    lhs.At (i, variableIdx) = adjTable_[edge.first][edge.second].first * (containsReversedEdge ? 1 : -1);
-                    rhs.At (i, 0) += adjTable_[edge.first][edge.second].second;
+                    lhs.At (i, variableIdx) = adjTable_.At (edge.first, edge.second).Resistance () * (containsReversedEdge ? 1 : -1);
+                    rhs.At (i, 0) += adjTable_.At (edge.first, edge.second).Voltage ();
                 }
             }
             return { lhs, rhs };
