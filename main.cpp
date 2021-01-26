@@ -1,24 +1,23 @@
 #include <fstream>
 #include <algorithm>
 
-#include "MatrixLib.hpp"
-#include "Solver/SolverLib.hpp"
+#include "Reader/Language/driver.hpp"
+#include "Matrix/Matrix.hpp"
+#include "Solver/Solver.hpp"
 #include "Circuit/Circuit.hpp"
 
-int main () {
-    std::vector <std::vector <RV> > adjTable = {
-		{ { -1, -1 }, { 2, 0 }, { -1, -1 }, { 5, 0 }, { -1, -1 }, { 2, 0 } },
-		{ { 2, 0 }, { -1, -1 }, { 2, 0 }, { -1, -1 }, { -1, -1 }, { -1, -1 } },
-		{ { -1, -1 }, { 2, 0 }, { -1, -1 }, { 1, 10 }, { -1, -1 }, { -1, -1 } },
-		{ { 5, 0 }, { -1, -1 }, { 1, -10 }, { -1, -1 }, { 1, -10 }, { -1, -1 } },
-		{ { -1, -1 }, { -1, -1 }, { -1, -1 }, { 1, 10 }, { -1, -1 }, { 2, 0 } },
-		{ { 2, 0 }, { -1, -1 }, { -1, -1 }, { -1, -1 }, { 2, 0 }, { -1, -1 } },
-	};
+int main (int argc, char** argv) {
+	std::ifstream infile { argv[1] };
+	if (!infile) {
+		ERRSTREAM << "Error opening file!" << std::endl;
+		return 0;
+	}
 	
-	Circuit circuit { adjTable };
-	std::cout << "Second law:" << std::endl;
-	circuit.SecondKhLaw ();
-	std::cout << "First law:" << std::endl;
-	circuit.FirstKhLaw ();
+	yy::LangDriver driver { infile };
+	if (driver.parse ()) {
+		driver.execute ();
+	}
+
+	Linear::Matrix <RV> test {};
 	return 0;
 }

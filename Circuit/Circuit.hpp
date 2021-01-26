@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../MatrixLib.hpp"
+#include "../Matrix/Matrix.hpp"
 #include <vector>
 #include <map>
 #include <set>
@@ -8,12 +8,8 @@
 using Vertex = int;
 using Edge = std::pair <Vertex, Vertex>;
 
-bool operator < (Edge lhs, Edge rhs) {
-    if (lhs.first == rhs.first) {
-        return lhs.second < rhs.second;
-    }
-    return lhs.first < rhs.first;
-}
+//  So we can make them keys in std::map
+bool operator < (Edge lhs, Edge rhs);
 
 using RV = std::pair <double, double>; //   Resistance + voltage
 const RV emptyRV = { -1, -1 };
@@ -21,13 +17,13 @@ const RV emptyRV = { -1, -1 };
 class DFS final {
     private:
         //  WORK
-        std::vector <std::vector <RV> >* table_ {};
+        std::vector <std::vector <RV>>* table_ {};
         std::vector <bool> used_ {};
         std::vector <int> curPath_ {};
-        std::set <std::set <Vertex> > cyclesSets_ {};
+        std::set <std::set <Vertex>> cyclesSets_ {};
 
         //  RESULT
-        std::vector <std::vector <Vertex> > cycles_ {};
+        std::vector <std::vector <Vertex>> cycles_ {};
 
         void VertexEntry (int cur) {
             used_[cur] = true;
@@ -73,13 +69,13 @@ class DFS final {
         }
 
     public:
-        DFS (std::vector <std::vector <RV> >* table):
+        DFS (std::vector <std::vector <RV>>* table):
             table_ (table),
             used_ (table->size (), false),
             curPath_ ({})
             {}
 
-        std::vector <std::vector <Vertex> > GetCycles () {
+        std::vector <std::vector <Vertex>> GetCycles () {
             for (int i = 0; i < used_.size (); ++i) {
                 Step (i, -1);
             }
@@ -90,7 +86,7 @@ class DFS final {
 class Circuit final {
     private:
         //  GIVEN
-        std::vector <std::vector <RV> > adjTable_ {};   //  TODO: Matrix можно
+        std::vector <std::vector <RV>> adjTable_ {};   //  TODO: Matrix можно
 
         //  TOOLS
         DFS dfs_;
@@ -98,7 +94,7 @@ class Circuit final {
         //  CALCULATED
         int maxIdx_ = 0;
         std::map <Edge, int> edgesToVariables_ {};
-        std::vector <std::vector <Vertex> > cycles_ {};
+        std::vector <std::vector <Vertex>> cycles_ {};
 
         //  RESULT
         Linear::Matrix <double> lhs_ {};
@@ -118,7 +114,7 @@ class Circuit final {
         }
 
     public:
-        Circuit (const std::vector <std::vector <RV> >& adjTable):
+        Circuit (const std::vector <std::vector <RV>>& adjTable):
             adjTable_ (adjTable),
             dfs_ (&adjTable_),
             edgesToVariables_ ({}),
@@ -152,9 +148,10 @@ class Circuit final {
             return ans;
         }
 
-        Linear::Matrix <double> FirstKhLaw () {
-            Linear::Matrix <double> lhs { adjTable_.size (), maxIdx_ + 1 };
-            Linear::Matrix <double> rhs { adjTable_.size (), 1, 0 };
+        PairMatrix FirstKhLaw () {
+            int adjTableSize = adjTable_.size ();   //  to avoid static_cast
+            Linear::Matrix <double> lhs { adjTableSize, maxIdx_ + 1 };
+            Linear::Matrix <double> rhs { adjTableSize, 1, 0 };
             for (int i = 0; i < adjTable_.size (); ++i) {
                 for (int j = 0; j < adjTable_[i].size (); ++j) {
                     if (adjTable_[i][j] != emptyRV) {
@@ -165,13 +162,13 @@ class Circuit final {
                     }
                 }
             }
-            DEBUG (lhs);
-            DEBUG (rhs);
+            return { lhs, rhs };
         }
 
-        Linear::Matrix <double> SecondKhLaw () {
-            Linear::Matrix <double> lhs { cycles_.size (), maxIdx_ + 1 };
-            Linear::Matrix <double> rhs { cycles_.size (), 1, 0 };
+        PairMatrix SecondKhLaw () {
+            int cyclesSize = cycles_.size ();   //  to avoid static_cast
+            Linear::Matrix <double> lhs { cyclesSize, maxIdx_ + 1 };
+            Linear::Matrix <double> rhs { cyclesSize, 1, 0 };
             for (int i = 0; i < cycles_.size (); ++i) {
                 for (int j = 0; j < cycles_[i].size () - 1; ++j) {
                     Edge edge = { cycles_[i][j], cycles_[i][j+1] };
@@ -181,8 +178,20 @@ class Circuit final {
                     rhs.At (i, 0) += adjTable_[edge.first][edge.second].second;
                 }
             }
-            DEBUG (lhs);
-            DEBUG (rhs);
+            return { lhs, rhs };
+        }
+
+        PairMatrix Execute () {
+            PairMatrix temp = FirstKhLaw ();
+            lhs_ = temp.first;
+            rhs_ = temp.second;
+
+            temp = SecondKhLaw ();
+            lhs_.AppendRows (temp.first);
+            rhs_.AppendRows (temp.second);
+
+            return { lhs_, rhs_ };
+
         }
 
 };

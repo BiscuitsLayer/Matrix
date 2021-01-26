@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../MatrixLib.hpp"
+#include "../Matrix/Matrix.hpp"
 
 class Solver final {
     private:
@@ -57,16 +57,15 @@ class Solver final {
             ansParticular_ = { nCols - 1, 1, ansParticularVec };
         }
 
-        void Execute () {
+        PairMatrix Execute () {
 	        result_ = main_;
-            result_.AppendCol (additional_);
+            result_.AppendCols (additional_);
             main_.MakeEye (false);
             result_.MakeEye (true);
 
             int generalRank = GetRank ();
             CreateFundamental (generalRank);
             CreateParticular ();
-            DEBUG (ansFundamental_);
-            DEBUG (ansParticular_);
+            return { ansFundamental_, ansParticular_ };
         }
 };

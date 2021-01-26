@@ -8,6 +8,8 @@
 
 #define DEBUG(var) std::cout << "DEBUG: " << #var << " = " << var << std::endl;
 
+using RV = std::pair <double, double>; //   Resistance + voltage
+
 template <typename T>
 std::ostream& operator << (std::ostream& stream, const std::vector <T>& vec) {
 	for (int i = 0; i < vec.size (); ++i) {
@@ -84,10 +86,10 @@ namespace Linear {
 			//	ROW AND COLUMN OPERATIONS
 			void SwapRows 	(int lhs, int rhs);
 			void AddRows	(int source, int destination, T factor);
-			void AppendRow	(Matrix <T>& additional, bool inFront = false);
+			void AppendRows	(Matrix <T>& additional, bool inFront = false);
 			void SwapCols 	(int lhs, int rhs);
 			void AddCols 	(int source, int destination, T factor);
-			void AppendCol	(Matrix <T>& additional, bool inFront = false);
+			void AppendCols	(Matrix <T>& additional, bool inFront = false);
 
 			//	BASIC TYPES
 			static Matrix Zeros (int n);
@@ -161,30 +163,6 @@ T Linear::Determinant::Full (const Linear::Matrix <T>& matrix) {
 			}
 			//	Main sum
 			ans += ( i % 2 == 0 ? + 1 : - 1 ) * matrix.At (0, i) * Determinant::Full (temp);
-		}
-		ans = (std::fabs (ans) < Linear::EPS ? 0 : ans);
-		return std::round (ans);
-	}
-}
-
-double Linear::Determinant::Gauss (const Linear::Matrix <double>& matrix) {
-	auto shape = matrix.Shape ();
-	int nRows = shape.first, nCols = shape.second;
-	if (nRows != nCols) {
-		throw (std::invalid_argument ("Trying to calcute non-square matrix determinant."));
-	}
-	if (nRows == 1) {
-		return matrix.At (0, 0);
-	}
-	else {
-		double ans = 1.0;
-		int gaussFactor = 1;
-		Linear::Matrix <double> temp = matrix;
-		temp.DirectGauss (&gaussFactor);
-		ans *= gaussFactor;
-
-		for (int i = 0; i < nRows; ++i) {
-			ans *= temp.At (i, i);
 		}
 		ans = (std::fabs (ans) < Linear::EPS ? 0 : ans);
 		return std::round (ans);
@@ -480,20 +458,20 @@ void Linear::Matrix <T>::AddRows (int source, int destination, T factor) {
 }
 
 template <typename T>
-void Linear::Matrix <T>::AppendRow (Matrix <T>& additional, bool inFront) {
-	if (additional.nRows_ != 1) {
-		throw std::invalid_argument ("Appending not a row!");
+void Linear::Matrix <T>::AppendRows (Matrix <T>& additional, bool inFront) {
+	if (additional.nCols_ != nCols_) {
+		throw std::invalid_argument ("Numbers of columns don't match!");
 	}
-    auto mainVec = static_cast <std::vector <T> > (*this);
-	auto additionalVec = static_cast <std::vector <T> > (additional);
+    auto mainVec = static_cast <std::vector <T>> (*this);
+	auto additionalVec = static_cast <std::vector <T>> (additional);
 	Linear::Matrix <T> result {};
 	if (inFront) {
 		additionalVec.insert (additionalVec.end(), mainVec.begin (), mainVec.end ());
-		result = { nRows_ + 1, nCols_, additionalVec };
+		result = { nRows_ + additional.nRows_, nCols_, additionalVec };
 	}
 	else {
 		mainVec.insert (mainVec.end(), additionalVec.begin (), additionalVec.end ());
-		result = { nRows_ + 1, nCols_, mainVec };
+		result = { nRows_ + additional.nRows_, nCols_, mainVec };
 	}
 	*this = result;
 }
@@ -523,22 +501,22 @@ void Linear::Matrix <T>::AddCols (int source, int destination, T factor) {
 }
 
 template <typename T>
-void Linear::Matrix <T>::AppendCol (Matrix <T>& additional, bool inFront) {
-	if (additional.nCols_ != 1) {
-		throw std::invalid_argument ("Appending not a column!");
+void Linear::Matrix <T>::AppendCols (Matrix <T>& additional, bool inFront) {
+	if (additional.nRows_ != this->nRows_) {
+		throw std::invalid_argument ("Numbers of rows don't match!");
 	}
     Transpose ();
-    auto mainVec = static_cast <std::vector <T> > (*this);
-	auto additionalVec = static_cast <std::vector <T> > (additional);
+    auto mainVec = static_cast <std::vector <T>> (*this);
+	auto additionalVec = static_cast <std::vector <T>> (additional);
 	Transpose ();
 	Linear::Matrix <T> result {};
 	if (inFront) {
 		additionalVec.insert (additionalVec.end(), mainVec.begin (), mainVec.end ());
-		result = { nCols_ + 1, nRows_, additionalVec };
+		result = { nCols_ + additional.nCols_, nRows_, additionalVec };
 	}
 	else {
 		mainVec.insert (mainVec.end(), additionalVec.begin (), additionalVec.end ());
-		result = { nCols_ + 1, nRows_, mainVec };
+		result = { nCols_ + additional.nCols_, nRows_, mainVec };
 	}
 	result.Transpose ();
 	*this = result;
@@ -600,7 +578,13 @@ void Linear::Matrix <T>::Dump (std::ostream& stream) const {
 	stream.precision (2);
 	for (int i = 0; i < nRows_; ++i) {
 		for (int j = 0; j < nCols_; ++j) {
-			stream << std::left << std::setw (10) << (std::fabs (data_[i][j]) < EPS ? 0 : data_[i][j]);
+			//	TODO: сейчас будет дикий костылище, который предстоит исправить
+			//if (std::is_same <T, RV>::value) {
+				stream << std::left << std::setw (10) << "(" << data_[i][j].first << ", " << data_[i][j].second << ")";
+			/*}
+			else {
+				stream << std::left << std::setw (10) << data_[i][j];
+			}*/
 		}
 		if (i != nRows_ - 1)
 			stream << std::endl;
@@ -698,3 +682,6 @@ Linear::Matrix <T> Linear::operator * (const Matrix <T>& lhs, const Matrix <T>& 
 	//	No std::move here because of RVO
 	return temp;
 }
+
+//	TODO:
+using PairMatrix = std::pair <Linear::Matrix <double>, Linear::Matrix <double>>;
