@@ -42,7 +42,7 @@
 
 
 // Unqualified %code blocks.
-#line 27 "../Language/lang.y"
+#line 26 "../Language/lang.y"
 
 	//	BISON AND FLEX
 	#include "../Language/driver.hpp"
@@ -51,13 +51,11 @@
 	#include "../../Circuit/Circuit.hpp"
 
 	namespace yy {
-
 		parser::token_type yylex (parser::semantic_type* yylval, parser::location_type* location, LangDriver* driver);
-
 	}
 
 
-#line 61 "lang.tab.cc"
+#line 59 "lang.tab.cc"
 
 
 #ifndef YY_
@@ -149,7 +147,7 @@
 #define YYRECOVERING()  (!!yyerrstatus_)
 
 namespace yy {
-#line 153 "lang.tab.cc"
+#line 151 "lang.tab.cc"
 
   /// Build a parser object.
   parser::parser (LangDriver* driver_yyarg)
@@ -742,34 +740,37 @@ namespace yy {
           switch (yyn)
             {
   case 2: // command: command edge "," values
-#line 67 "../Language/lang.y"
+#line 64 "../Language/lang.y"
                                                                 { 
 													driver->TableAt (yystack_[2].value.as < Edge > ().first, yystack_[2].value.as < Edge > ().second) = yystack_[0].value.as < RV > ();
 													driver->TableAt (yystack_[2].value.as < Edge > ().second, yystack_[2].value.as < Edge > ().first) = RV { yystack_[0].value.as < RV > ().Resistance (), -1 * yystack_[0].value.as < RV > ().Voltage () };
 												}
-#line 751 "lang.tab.cc"
+#line 749 "lang.tab.cc"
     break;
 
   case 4: // edge: UINT "--" UINT
-#line 75 "../Language/lang.y"
-                                                                        { yylhs.value.as < Edge > () = Edge { yystack_[2].value.as < unsigned int > (), yystack_[0].value.as < unsigned int > () }; }
-#line 757 "lang.tab.cc"
+#line 72 "../Language/lang.y"
+                                                                        { 
+													yylhs.value.as < Edge > () = Edge { yystack_[2].value.as < unsigned int > (), yystack_[0].value.as < unsigned int > () };
+													driver->PushGivenEdge (yylhs.value.as < Edge > ());
+												}
+#line 758 "lang.tab.cc"
     break;
 
   case 5: // values: DOUBLE resistance ";"
 #line 79 "../Language/lang.y"
                                                                 { yylhs.value.as < RV > () = RV { yystack_[2].value.as < double > (), 0 }; }
-#line 763 "lang.tab.cc"
+#line 764 "lang.tab.cc"
     break;
 
   case 6: // values: DOUBLE resistance ";" DOUBLE voltage
 #line 80 "../Language/lang.y"
                                                 { yylhs.value.as < RV > () = RV { yystack_[4].value.as < double > (), yystack_[1].value.as < double > () }; }
-#line 769 "lang.tab.cc"
+#line 770 "lang.tab.cc"
     break;
 
 
-#line 773 "lang.tab.cc"
+#line 774 "lang.tab.cc"
 
             default:
               break;
@@ -1073,7 +1074,7 @@ namespace yy {
   const signed char
   parser::yyrline_[] =
   {
-       0,    67,    67,    71,    75,    79,    80,    84,    85,    89,
+       0,    64,    64,    68,    72,    79,    80,    84,    85,    89,
       90
   };
 
@@ -1153,13 +1154,12 @@ namespace yy {
   }
 
 } // yy
-#line 1157 "lang.tab.cc"
+#line 1158 "lang.tab.cc"
 
 #line 93 "../Language/lang.y"
 
 
 namespace yy {
-
 	parser::token_type yylex (parser::semantic_type* yylval, parser::location_type* location, LangDriver* driver) {
 		return driver->yylex (yylval, location);
 	}
@@ -1171,5 +1171,4 @@ namespace yy {
 	void parser::report_syntax_error (parser::context const& context) const {
 		driver->PrintErrorAndExit (context.location (), "Syntax error!");
 	}
-
 }

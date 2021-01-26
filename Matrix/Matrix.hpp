@@ -1,32 +1,34 @@
 #pragma once
 
+//	SYSTEM
 #include <iostream>
 #include <vector>
 #include <cmath>
 #include <iomanip>
 #include <exception>
 
-#define DEBUG(var) std::cout << "DEBUG: " << #var << " = " << var << std::endl;
+//	SETTINGS
+#include "../Settings/Settings.hpp"
 
+//	TODO LIST
 //	Генератор тестов (+ добавить ответов для E2E тестов)
 //	Exception-safety в операторах копирования и присваивания
 
 namespace Linear {
-
-	const double EPS = 1e-3;
 	using PairInt = std::pair <int, int>;
 
 	template <typename T>
 	class Matrix;
 
 	namespace Determinant {
-
+		//	DETERMINANT TYPES
 		enum class Type {
 			ERROR = 0,
 			FULL = 1,
 			GAUSS = 2
 		};
 
+		//	REALIZATION
 		template <typename T>
 		T Full (const Linear::Matrix <T>& matrix);
 	    double Gauss (const Linear::Matrix <double>& matrix);
@@ -47,10 +49,10 @@ namespace Linear {
 			explicit 	Matrix 	(int rows = 0);
 						~Matrix ();
 
-			//	FROM VECTOR
+			//	CTOR FROM VECTOR
 			Matrix (int rows, int cols, std::vector <T> &vec);
 
-			//	FROM ANOTHER MATRIX
+			//	CTORS FROM ANOTHER MATRIX
 			Matrix (const Matrix& rhs);
 			Matrix (Matrix&& rhs) noexcept;
 
@@ -120,10 +122,6 @@ namespace Linear {
 	Matrix <T> operator * (const Matrix <T>& lhs, const Matrix <T>& rhs);
 }
 
-
-// MAIN CODE //
-
-
 template <typename T>
 T Linear::Determinant::Full (const Linear::Matrix <T>& matrix) {
 	auto shape = matrix.Shape ();
@@ -155,7 +153,7 @@ T Linear::Determinant::Full (const Linear::Matrix <T>& matrix) {
 			//	Main sum
 			ans += ( i % 2 == 0 ? + 1 : - 1 ) * matrix.At (0, i) * Determinant::Full (temp);
 		}
-		ans = (std::fabs (ans) < Linear::EPS ? 0 : ans);
+		ans = (std::fabs (ans) < EPS ? 0 : ans);
 		return std::round (ans);
 	}
 }
@@ -164,7 +162,7 @@ template <typename T>
 void Linear::Matrix <T>::ReverseGauss (bool skipAdditional) & {
 	int columnStartValue = (nCols_ - 1) - (skipAdditional ? 1 : 0);
     for (int i = std::min (nRows_ - 1, columnStartValue) ; i >= 0; --i) {
-        if (std::fabs (At (i, i)) >= Linear::EPS) {
+        if (std::fabs (At (i, i)) >= EPS) {
             for (int j = i - 1; j >= 0; --j) {
 		    	AddRows (i, j, (- 1) * (At (j, i) / At (i, i)));
 		    }
@@ -238,12 +236,15 @@ Linear::Matrix <T>::Matrix (Matrix&& rhs) noexcept {
 template <typename T>
 Linear::Matrix <T>& Linear::Matrix <T>::operator = (const Matrix& rhs) {
 	if (this != &rhs) {
+		for (int i = 0; i < nRows_; ++i) {
+			delete [] data_[i];
+		}
 		delete [] data_;
 		nRows_ = rhs.nRows_;
 		nCols_ = rhs.nCols_;
 		data_ = new T* [nRows_] {};
 		for (int i = 0; i < nRows_; ++i) {
-			data_[i] = new T [nCols_] {};
+			data_[i] = new T [nCols_];
 			for (int j = 0; j < nCols_; ++j) {
 				data_[i][j] = rhs.data_[i][j];
 			}
@@ -428,7 +429,7 @@ void Linear::Matrix <T>::MakeEye (bool skipAdditional) & {
 	Diagonalize (skipAdditional);
 	int columnStartValue = (nCols_ - 1) - (skipAdditional ? 1 : 0);
     for (int i = std::min (nRows_ - 1, columnStartValue) ; i >= 0; --i) {
-        if (std::fabs (At (i, i)) >= Linear::EPS) {
+        if (std::fabs (At (i, i)) >= EPS) {
             T divisor = At (i, i);
             for (int j = nCols_ - 1; j >= i; --j) {
                 At (i, j) /= divisor;

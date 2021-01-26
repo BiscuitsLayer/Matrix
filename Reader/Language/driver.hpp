@@ -1,17 +1,5 @@
 #pragma once
 
-//TODO:
-#define OUTSTREAM std::cout
-#define ERRSTREAM std::cerr
-
-//TODO: may be in paracl they also should be smwhr in settings
-//  ERROR CODES
-enum ErrorCodes {
-    ERROR_INV_ARG = 1,
-    ERROR_OVF = 2,
-    ERROR_SYNTAX = 3
-};
-
 //  SYSTEM
 #include <cstring>
 #include <fstream>
@@ -20,29 +8,43 @@ enum ErrorCodes {
 #include "../Build/lang.tab.hh"
 #include "../Language/SyntaxCheck.hpp"
 
-//  MATRIX
-#include "../../Matrix/Matrix.hpp"
+//  SOLVER
 #include "../../Solver/Solver.hpp"
 
-namespace yy {
+//  SETTINGS
+#include "../../Settings/Settings.hpp"
 
+namespace yy {
     class LangDriver {
         private:
+            //  LEXER
             SyntaxCheck* lexer_ {};
+
+            //  CIRCUIT STUFF
             Linear::Matrix <RV> adjTable_ {};
+            std::vector <Edge> givenEdges_ {};
         public:
             //  METHODS
             parser::token_type yylex (parser::semantic_type* yylval, parser::location_type* location);
             bool parse ();
             void execute ();
 
+            //  CIRCUIT METHODS
             RV& TableAt (int i, int j);
+            void PushGivenEdge (Edge edge);
+
+            //  ERROR HANDLING METHODS
             void PrintErrorAndExit (yy::location location, const std::string& message) const;
             std::string GetCurrentString () const;
 
-            //  CTOR AND DTOR
-            LangDriver (std::ifstream& infile);
-            ~LangDriver ();
-    };
+            //  CTOR
+            LangDriver (std::ifstream& infile):
+                lexer_ (new SyntaxCheck)
+                {
+                    lexer_->switch_streams (infile, OUTSTREAM);
+                }
 
+            //  DTOR
+            ~LangDriver () { delete lexer_; }
+    };
 }

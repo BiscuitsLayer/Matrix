@@ -502,7 +502,7 @@ static const flex_int32_t yy_rule_can_match_eol[12] =
 
 static const flex_int16_t yy_rule_linenum[11] =
     {   0,
-       31,   32,   33,   34,   35,   36,   37,   38,   39,   40
+       30,   31,   32,   33,   34,   35,   36,   37,   38,   39
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -716,9 +716,9 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 28 "../Language/lang.l"
+#line 27 "../Language/lang.l"
 
-#line 30 "../Language/lang.l"
+#line 29 "../Language/lang.l"
                             /* Сопоставляем каждой лексеме её константу для парсера */
 #line 724 "lex.yy.cc"
 
@@ -807,58 +807,58 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 31 "../Language/lang.l"
+#line 30 "../Language/lang.l"
 /* skip blanks and tabs */
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 32 "../Language/lang.l"
+#line 31 "../Language/lang.l"
 /* next line or vertical tab */
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 33 "../Language/lang.l"
+#line 32 "../Language/lang.l"
 return yy::parser::token_type::RESISTANCE;
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 34 "../Language/lang.l"
+#line 33 "../Language/lang.l"
 return yy::parser::token_type::VOLTAGE;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 35 "../Language/lang.l"
+#line 34 "../Language/lang.l"
 return yy::parser::token_type::DOUBLEDASH;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 36 "../Language/lang.l"
+#line 35 "../Language/lang.l"
 return yy::parser::token_type::COMMA;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 37 "../Language/lang.l"
+#line 36 "../Language/lang.l"
 return yy::parser::token_type::SEMICOLON;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 38 "../Language/lang.l"
+#line 37 "../Language/lang.l"
 return yy::parser::token_type::UINT;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 39 "../Language/lang.l"
+#line 38 "../Language/lang.l"
 return yy::parser::token_type::DOUBLE;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 40 "../Language/lang.l"
+#line 39 "../Language/lang.l"
 return yy::parser::token_type::ERROR;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 42 "../Language/lang.l"
+#line 41 "../Language/lang.l"
 ECHO;
 	YY_BREAK
 #line 865 "lex.yy.cc"
@@ -1988,5 +1988,5 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 42 "../Language/lang.l"
+#line 41 "../Language/lang.l"
 

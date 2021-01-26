@@ -1,15 +1,5 @@
 #include "driver.hpp"
 
-yy::LangDriver::LangDriver (std::ifstream& infile):
-    lexer_ (new SyntaxCheck)
-    {
-        lexer_->switch_streams (infile, OUTSTREAM);
-    }
-
-yy::LangDriver::~LangDriver () {
-    delete lexer_;
-}
-
 yy::parser::token_type yy::LangDriver::yylex (yy::parser::semantic_type* yylval, parser::location_type* location) {
     yy::parser::token_type tokenType = static_cast <yy::parser::token_type> (lexer_->yylex ());
     switch (tokenType) {
@@ -45,8 +35,11 @@ void yy::LangDriver::execute () {
     PairMatrix temp = circuit.Execute ();
     Solver solver { temp.first, temp.second };
     temp = solver.Execute ();
-    DEBUG (temp.first);
-    DEBUG (temp.second);
+    for (auto edge : givenEdges_) {
+        bool containsReversedEdge = false;
+        int variableIdx = circuit.GetVariableIdx (edge, containsReversedEdge);
+        std::cout << edge.first << " -- " << edge.second << ": " << temp.second.At (variableIdx, 0) * (containsReversedEdge ? -1 : 1) << " A" << std::endl;
+    }
 }
 
 RV& yy::LangDriver::TableAt (int i, int j) {
@@ -57,6 +50,10 @@ RV& yy::LangDriver::TableAt (int i, int j) {
         adjTable_.Resize (shape);
     }
     return adjTable_.At (i, j);
+}
+
+void yy::LangDriver::PushGivenEdge (Edge edge) {
+    givenEdges_.push_back (edge);
 }
 
 void yy::LangDriver::PrintErrorAndExit (yy::location location, const std::string& message) const {

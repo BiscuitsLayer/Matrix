@@ -1,6 +1,10 @@
 #pragma once
 
+//  MATRIX
 #include "../Matrix/Matrix.hpp"
+
+//  TYPEDEFS
+using PairMatrix = std::pair <Linear::Matrix <double>, Linear::Matrix <double>>;
 
 class Solver final {
     private:
@@ -9,10 +13,11 @@ class Solver final {
         Linear::Matrix <double> additional_ {};
         Linear::Matrix <double> result_ {};
 
-        //  CALCULATED
+        //  COMPUTATIONS
         Linear::Matrix <double> ansFundamental_ {};
         Linear::Matrix <double> ansParticular_ {};
     public:
+        //  CTOR
         Solver (Linear::Matrix <double> main, Linear::Matrix <double> additional):
             main_ (main),
             additional_ (additional),
@@ -21,51 +26,13 @@ class Solver final {
             ansParticular_ ({})
             {}
 
-        int GetRank () {
-            int mainRank = main_.Rank (), resultRank = result_.Rank ();
-            if (mainRank != resultRank) {
-                std::stringstream strstream {};
-                strstream << "No solutions: mainRank = " << mainRank << ", resultRank = " << resultRank;
-                throw std::invalid_argument (strstream.str ());
-            }
-            return mainRank;
-        }
+        //  CHECK RANK EQUALITY
+        int CheckRank ();
 
-        void CreateFundamental (int generalRank) {
-            int nRows = result_.Shape ().first, nCols = result_.Shape ().second;
-            std::vector <double> ansFundamentalVec {};
-            for (int i = 0; i < std::min <int> (nRows, nCols - 1); ++i) {
-                for (int j = generalRank; j < nCols - 1; ++j) {
-                    ansFundamentalVec.push_back (result_.At (i, j));
-                }
-            }
-            ansFundamentalVec.resize ((nCols - 1) * ((nCols - 1) - generalRank));
-            ansFundamental_ = { nCols - 1, (nCols - 1) - generalRank, ansFundamentalVec};
-            for (int i = 0; i < (nCols - 1) - generalRank; ++i) {
-                ansFundamental_.At (generalRank + i, i) = -1;
-            }
-            ansFundamental_.Negate ();
-        }
+        //  SOLVE
+        void CreateFundamental (int generalRank);
+        void CreateParticular ();
 
-        void CreateParticular () {
-            int nRows = result_.Shape ().first, nCols = result_.Shape ().second;
-            std::vector <double> ansParticularVec {};
-            for (int i = 0; i < std::min <int> (nRows, nCols - 1); ++i) {
-                ansParticularVec.push_back (result_.At (i, nCols - 1));
-            }
-            ansParticularVec.resize ((nCols - 1) * 1);
-            ansParticular_ = { nCols - 1, 1, ansParticularVec };
-        }
-
-        PairMatrix Execute () {
-	        result_ = main_;
-            result_.AppendCols (additional_);
-            main_.MakeEye (false);
-            result_.MakeEye (true);
-
-            int generalRank = GetRank ();
-            CreateFundamental (generalRank);
-            CreateParticular ();
-            return { ansFundamental_, ansParticular_ };
-        }
+        //  EXECUTE
+        PairMatrix Execute ();
 };

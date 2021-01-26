@@ -19,7 +19,7 @@ double Linear::Determinant::Gauss (const Linear::Matrix <double>& matrix) {
 		for (int i = 0; i < nRows; ++i) {
 			ans *= temp.At (i, i);
 		}
-		ans = (std::fabs (ans) < Linear::EPS ? 0 : ans);
+		ans = (std::fabs (ans) < EPS ? 0 : ans);
 		return std::round (ans);
 	}
 }

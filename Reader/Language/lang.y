@@ -20,7 +20,6 @@
 
 	// forward declaration of argument to parser
 	namespace yy { class LangDriver; }
-
 }
 
 %code
@@ -32,9 +31,7 @@
 	#include "../../Circuit/Circuit.hpp"
 
 	namespace yy {
-
 		parser::token_type yylex (parser::semantic_type* yylval, parser::location_type* location, LangDriver* driver);
-
 	}
 
 }
@@ -72,7 +69,10 @@ command:
 ;
 
 edge:
-    UINT DOUBLEDASH UINT						{ $$ = Edge { $1, $3 }; }
+    UINT DOUBLEDASH UINT						{ 
+													$$ = Edge { $1, $3 };
+													driver->PushGivenEdge ($$);
+												}
 ;
 
 values:
@@ -93,7 +93,6 @@ voltage:
 %%
 
 namespace yy {
-
 	parser::token_type yylex (parser::semantic_type* yylval, parser::location_type* location, LangDriver* driver) {
 		return driver->yylex (yylval, location);
 	}
@@ -105,5 +104,4 @@ namespace yy {
 	void parser::report_syntax_error (parser::context const& context) const {
 		driver->PrintErrorAndExit (context.location (), "Syntax error!");
 	}
-
 }
