@@ -1,10 +1,10 @@
 {
     "files.associations": {
         "Makefile": "makefile",
-        "*.tcc": "cpp",
-        "stdexcept": "cpp",
         "array": "cpp",
         "atomic": "cpp",
+        "bit": "cpp",
+        "*.tcc": "cpp",
         "cctype": "cpp",
         "clocale": "cpp",
         "cmath": "cpp",
@@ -13,9 +13,13 @@
         "cstdint": "cpp",
         "cstdio": "cpp",
         "cstdlib": "cpp",
+        "cstring": "cpp",
+        "ctime": "cpp",
         "cwchar": "cpp",
         "cwctype": "cpp",
         "deque": "cpp",
+        "map": "cpp",
+        "set": "cpp",
         "unordered_map": "cpp",
         "vector": "cpp",
         "exception": "cpp",
@@ -35,6 +39,7 @@
         "utility": "cpp",
         "fstream": "cpp",
         "initializer_list": "cpp",
+        "iomanip": "cpp",
         "iosfwd": "cpp",
         "iostream": "cpp",
         "istream": "cpp",
@@ -42,14 +47,9 @@
         "new": "cpp",
         "ostream": "cpp",
         "sstream": "cpp",
+        "stdexcept": "cpp",
         "streambuf": "cpp",
-        "typeinfo": "cpp",
-        "bit": "cpp",
-        "ctime": "cpp",
-        "iomanip": "cpp",
-        "map": "cpp",
-        "set": "cpp",
-        "cstring": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "typeinfo": "cpp"
     }
 }

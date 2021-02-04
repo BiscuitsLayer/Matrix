@@ -14,7 +14,6 @@
 #include "../Settings/Settings.hpp"
 
 //	TODO LIST
-//	Генератор тестов (+ добавить ответов для E2E тестов)
 //	Отделить circuit от parser-a
 //	Генератор цепей
 //	Мультирёбра
@@ -44,7 +43,6 @@ namespace Linear {
 		private:
 			//	DATA
 			int nRows_ = 0, nCols_ = 0;
-			//T** data_ = nullptr;
 			using MatrixBuffer <T>::size_;
 			using MatrixBuffer <T>::used_;
 			using MatrixBuffer <T>::data_;
@@ -163,8 +161,9 @@ T Linear::Determinant::Full (const Linear::Matrix <T>& matrix) {
 			//	Main sum
 			ans += ( i % 2 == 0 ? + 1 : - 1 ) * matrix.At (0, i) * Determinant::Full (temp);
 		}
-		ans = (std::fabs (ans) < EPS ? 0 : ans);
-		return std::round (ans);
+		//ans = (std::fabs (ans) < EPS ? 0 : ans);
+		//return std::round (ans);
+		return ans;
 	}
 }
 
