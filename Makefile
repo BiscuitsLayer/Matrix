@@ -6,4 +6,4 @@ b:
 		Matrix/Matrix.cpp Solver/Solver.cpp Circuit/Circuit.cpp \
 		Reader/Build/lex.yy.cc Reader/Build/lang.tab.cc -ggdb3 -o main
 r:
-		./main Test/Circuit/1
+		./main Test/Input/Determinant/1
